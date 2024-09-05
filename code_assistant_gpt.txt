@@ -1,0 +1,70 @@
+Javascript Functions
+
+
+Disable form controls:
+
+
+stagehistory.disableForm = function (executionContext) {
+  var formContext = executionContext.getFormContext();
+  var statusReason = formContext.getAttribute("statecode").getValue();
+  if (statusReason == 0) {
+    var formControls = formContext.ui.controls;
+    formControls.forEach((control) => {
+      if (control.getName() != "" && control.getName() != null) {
+        control.setDisabled(true);
+      }
+    });
+  }
+};
+
+
+Lock BPF (business process flow) steps except the active one:
+
+
+incident.lockAllBPFFormFieldsExceptCurrentStage = function (executionContext) {
+
+    var formContext = executionContext.getFormContext();
+    // Obtem o fluxo de processos de negócios ativo
+    var activeProcess = formContext.data.process.getActiveProcess();
+    // Obtem o estágio ativo do BPF
+    var activeStage = formContext.data.process.getActiveStage();
+    var activeStageId = activeStage.getId();
+    var activeStageName = activeStage.getName();
+    // Itera por cada controle no formulário
+    formContext.ui.controls.forEach(function (control) {
+        var controlName = control.getName();
+
+        // Verifica se o controle faz parte do BPF
+        if (controlName && controlName.indexOf("header_process_") !== -1) {
+            var attribute = control.getAttribute();
+            if (attribute) {
+                var attributeName = attribute.getName();
+                var processStages = activeProcess.getStages();
+
+                var isFieldInCurrentStage = false;
+
+                // Verifica se o atributo faz parte do estágio ativo
+                processStages.forEach(function (stage) {
+                    if (stage.getId() === activeStageId) {
+                        var steps = stage.getSteps();
+                        steps.forEach(function (step) {
+                            if (step.getAttribute() === attributeName) {
+                                isFieldInCurrentStage = true;
+                            }
+                        });
+                    }
+                });
+
+                // Se o campo não estiver no estágio ativo, bloqueia-o
+                if (!isFieldInCurrentStage) {
+                    control.setDisabled(true);
+                } else {
+                    // Se o campo estiver no estágio ativo, desbloqueia-o
+                    control.setDisabled(false);
+                }
+            }
+        }
+    });
+};
+
+
