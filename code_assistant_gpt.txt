@@ -1,7 +1,5 @@
-Javascript Functions
 
-
-Disable form controls:
+function to disable form controls:
 
 
 stagehistory.disableForm = function (executionContext) {
