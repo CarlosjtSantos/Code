@@ -65,4 +65,48 @@ incident.lockAllBPFFormFieldsExceptCurrentStage = function (executionContext) {
     });
 };
 
+function to change owner of related record
 
+async function sendToOwnerDepartment(primaryControl) {
+  var formContext = primaryControl;
+  var incident = formContext.getAttribute("mtp_incidentid").getValue();
+  var incidentId = incident[0].id.replace("{", "").replace("}", "");
+  var inforequest = formContext.data.entity.getId();
+  var inforequestId = inforequest.replace("{", "").replace("}", "");
+
+  //Web Api - Caso associado
+  await Xrm.WebApi.retrieveRecord(
+    "incident",
+    incidentId,
+    "?$select=title, _ownerid_value"
+  ).then(
+    function success(result) {
+      console.log(
+        "Retrieved Incident:",
+        result,
+        "Retrieved values: Name: " +
+          result.title +
+          ", Owner: " +
+          result.owninguser,
+        ", Owner ID: " + result._ownerid_value
+      );
+
+      // Criar Objeto para mapear Owner
+      var newOwner = new Array();
+      newOwner[0] = new Object();
+      newOwner[0].id = result["_ownerid_value"];
+      newOwner[0].name =
+        result["_ownerid_value@OData.Community.Display.V1.FormattedValue"];
+      newOwner[0].entityType =
+        result["_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname"];
+      //Alterar Owner para o owner do caso e alterar estado /subestado (Resolvido / Respondido)
+      formContext.getAttribute("ownerid").setValue(newOwner);
+      formContext.getAttribute("statecode").setValue(1);
+      formContext.getAttribute("statuscode").setValue(2);
+	  formContext.data.refresh(true);
+    },
+    function (error) {
+      console.log(error.message);
+    }
+  );
+}
